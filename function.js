@@ -5,16 +5,14 @@ const Application = PIXI.Application,
 const TextureCache = PIXI.utils.TextureCache;
 
 let dungeon, explorer, treasure, id, blob=[], door ;
-let button , button_down, textAgain , a1,g,a2,i,n ;
+let buttonAgain, buttonNext , button_down, textAgain , a1,g,a2,i,n1 , textNext, n2,e,x,t ;
 let outerBar ,innerBar, healthBar;
 let state;
 let buttonUpTexture ;
 let buttonDownTexture;
 
-let type = "WebGL";
-    if (!PIXI.utils.isWebGLSupported()) {
-      type = "canvas";
-    }
+
+
 
 const app = new Application({ 
     width: 256,         // default: 800
@@ -38,14 +36,14 @@ let gameOverScene;
 loader.onProgress.add(loadProgressHandler)
 loader
   .add("./img/treasureHunter.json")
-  .add("./img/buttonAgain.json")
+  .add("./img/buttonGame.json")
   .load(setup);
 function loadProgressHandler() {
     console.log("loading"); 
   }
 function setup() {
     id = resources["./img/treasureHunter.json"].textures; 
-    btn =  resources["./img/buttonAgain.json"].textures
+    btn =  resources["./img/buttonGame.json"].textures
     
     
     gameScene = new PIXI.Container();
@@ -56,6 +54,7 @@ function setup() {
     gameOverScene.visible = false;
 
     textAgain = new PIXI.Container();
+    textNext = new PIXI.Container();
     
 
     const dungeonTexture = TextureCache["dungeon.png"];
@@ -128,51 +127,92 @@ function setup() {
     // game over scene ////////////////
     buttonUpTexture = TextureCache["button_up.png"];
     buttonDownTexture = TextureCache["button_down.png"];
-    button = new Sprite(buttonUpTexture);
-    button.x = app.stage.width/2 -128/2;
-    button.y = app.stage.height / 2 + 40;
+    buttonAgain = new Sprite(buttonUpTexture);
+    buttonAgain.x = app.stage.width/3 - 128/2;
+    buttonAgain.y = app.stage.height / 2 + 40;
   
-    button.interactive = true;
-    button.buttonMode = true;
-    button
+    buttonAgain.interactive = true;
+    buttonAgain.buttonMode = true;
+    buttonAgain
     // Mouse & touch events are normalized into
     // the pointer* events for handling different
     // button events.
-        .on('pointerdown', onButtonDown)
+        .on('pointerdown', onButtonDownAgain)
         .on('pointerup', onButtonUp)
         .on('pointerupoutside', onButtonUp)
         .on('pointerover', onButtonOver)
         .on('pointerout', onButtonOut);
-    gameOverScene.addChild(button);
+    buttonNext = new Sprite(buttonUpTexture);
+    buttonNext.x = app.stage.width*2/3 - 128/2;
+    buttonNext.y = app.stage.height / 2 + 40;
+  
+    buttonNext.interactive = true;
+    buttonNext.buttonMode = true;
+    buttonNext
+    // Mouse & touch events are normalized into
+    // the pointer* events for handling different
+    // button events.
+        .on('pointerdown', onButtonDownNext)
+        .on('pointerup', onButtonUp)
+        .on('pointerupoutside', onButtonUp)
+        .on('pointerover', onButtonOver)
+        .on('pointerout', onButtonOut);
 
+    gameOverScene.addChild(buttonAgain);
+    gameOverScene.addChild(buttonNext);
+
+    ////text again ///////////////////
     const space = 3
     a1 = new Sprite(btn["a.png"])
-    a1.x= app.stage.width/2 - 128/2 + 128/4  ;
-    a1.y= app.stage.height / 2 + 40 + 12/2 ; 
+    a1.x= app.stage.width/3 - 128/2 + 128/4  ;
+    a1.y= app.stage.height / 2 + 42 + 12/2 ; 
     textAgain.addChild(a1)
 
     g = new Sprite(btn["g.png"])
     g.x= a1.x + a1.width+  space;
-    g.y= app.stage.height / 2 + 40 + 12/2 ; 
+    g.y= app.stage.height / 2 + 42 + 12/2 ; 
     textAgain.addChild(g)
 
     a2 = new Sprite(btn["a.png"])
     a2.x= g.x + g.width +  space;
-    a2.y= app.stage.height / 2 + 40 + 12/2 ; 
+    a2.y= app.stage.height / 2 + 42 + 12/2 ; 
     textAgain.addChild(a2)
 
     i = new Sprite(btn["i.png"])
     i.x= a2.x + a2.width+  space ;
-    i.y= app.stage.height / 2 + 40 + 12/2 ; 
+    i.y= app.stage.height / 2 + 42 + 12/2 ; 
     textAgain.addChild(i)
 
-    n = new Sprite(btn["n.png"])
-    n.x= i.x + i.width+  space ;
-    n.y= app.stage.height / 2 + 40 + 12/2 ; 
-    textAgain.addChild(n)
+    n1 = new Sprite(btn["n.png"])
+    n1.x= i.x + i.width+  space ;
+    n1.y= app.stage.height / 2 + 42 + 12/2 ; 
+    textAgain.addChild(n1)
 
     gameOverScene.addChild(textAgain);
     
+    ///////////text next //////////////////
+    
+    n2 = new Sprite(btn["n.png"])
+    n2.x= app.stage.width *2/3 - 128/2 + 128/4+space ;
+    n2.y= app.stage.height / 2 + 42 + 12/2 ; 
+    textAgain.addChild(n2)
+
+    e = new Sprite(btn["e.png"])
+    e.x= n2.x + n2.width+  space;
+    e.y= app.stage.height / 2 + 42 + 12/2 ; 
+    textAgain.addChild(e)
+
+    x = new Sprite(btn["x.png"])
+    x.x= e.x + e.width +  space;
+    x.y= app.stage.height / 2 + 42 + 12/2 ; 
+    textAgain.addChild(x)
+
+    t = new Sprite(btn["t.png"])
+    t.x= x.x + x.width+  space ;
+    t.y= app.stage.height / 2 + 42 + 12/2 ; 
+    textAgain.addChild(t)
+
+    gameOverScene.addChild(textAgain);
 
     const style = new PIXI.TextStyle({
       fontFamily: "Futura",
@@ -200,7 +240,7 @@ function gameLoop(delta) {
     
 }
 function play(delta) {
-    control();
+    
     for(let j = 0; j < blob.length; j++) {
       if(detectCollision(explorer, blob[j])){
        
@@ -239,7 +279,7 @@ function play(delta) {
       state = end;
       message.text = "You lost!";
     }
-    
+    control();
 }
 
 function end() {
@@ -268,59 +308,89 @@ function detectCollisionWall(obj1) {
   return contain(obj1, {x: 28, y: 10, width: 488, height: 480});
 }
 function control(){
+    
     const left = keyboard("ArrowLeft"),
             up = keyboard("ArrowUp"),
             right = keyboard("ArrowRight"),
             down = keyboard("ArrowDown");
+    
         //Left arrow key `press` method
     left.press = () => {
-        //Change the cat's velocity when the key is pressed
-        explorer.vx = -1;
-        explorer.vy = 0;
+      explorer.vx = -2;
+      if (down.isDown) {
+          explorer.vy = 2;
+      } else if (up.isDown) {
+          explorer.vy = -2;
+      }
     };
-    
-    //Left arrow key `release` method
+
     left.release = () => {
-        //If the left arrow has been released, and the right arrow isn't down,
-        //and the cat isn't moving vertically:
-        //Stop the cat
-        if (!right.isDown && explorer.vy === 0) {
-        explorer.vx = 0;
+        if (!right.isDown) {
+            explorer.vx = 0;
+        }
+        if (down.isUp && up.isUp) {
+            explorer.vy = 0;
         }
     };
+    
 
     //Up
     up.press = () => {
-        explorer.vy = -1;
-        explorer.vx = 0;
-    };
-    up.release = () => {
-        if (!down.isDown && explorer.vx === 0) {
-        explorer.vy = 0;
+      explorer.vy = -2;
+        if (left.isDown ) {
+          explorer.vx = -2;
+         
+        }else if (right.isDown){
+  
+          explorer.vx = 2;
         }
     };
+    up.release = () => {
+      if (!down.isDown) {
+          explorer.vy = 0;
+      }
+      if (left.isUp && right.isUp) {
+          explorer.vx = 0;
+      }
+    };
+    
 
     //Right
     right.press = () => {
-        explorer.vx = 1;
-        explorer.vy = 0;
+      explorer.vx = 2;
+      if (down.isDown) {
+          explorer.vy = 2;
+      } else if (up.isDown) {
+          explorer.vy = -2;
+      }
     };
     right.release = () => {
-        if (!left.isDown && explorer.vy === 0) {
-        explorer.vx = 0;
+        if (!left.isDown) {
+            explorer.vx = 0;
+        }
+        if (down.isUp && up.isUp) {
+            explorer.vy = 0;
         }
     };
 
     //Down
     down.press = () => {
-        explorer.vy = 1;
-        explorer.vx = 0;
+      explorer.vy = 2;
+      if (left.isDown) {
+          explorer.vx = -2;
+      } else if (right.isDown) {
+          explorer.vx = 2;
+      }
     };
     down.release = () => {
-        if (!up.isDown && explorer.vx === 0) {
-        explorer.vy = 0;
+        if (!up.isDown) {
+            explorer.vy = 0;
+        }
+        if (left.isUp && right.isUp) {
+            explorer.vx = 0;
         }
     };
+
 }
 
 function randomInt(min, max) {
@@ -455,7 +525,14 @@ function contain(sprite, container) {
   //Return the `collision` value
   return collision;
 }
-function onButtonDown() {
+function onButtonDownAgain() {
+  this.isdown = true;
+  this.texture = buttonDownTexture;
+  this.alpha = 1;
+  againGame();
+  state = play;
+}
+function onButtonDownNext() {
   this.isdown = true;
   this.texture = buttonDownTexture;
   this.alpha = 1;
