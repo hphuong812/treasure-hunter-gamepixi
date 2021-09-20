@@ -1,18 +1,26 @@
+import * as PIXI from "pixi.js"
 const Application = PIXI.Application,
     loader = PIXI.Loader.shared,
     resources = PIXI.Loader.shared.resources,
     Sprite = PIXI.Sprite;
 const TextureCache = PIXI.utils.TextureCache;
 
-let dungeon, explorer, treasure, id, blob=[], door ;
+let dungeon, explorer, treasure, map1, blob=[], door ;
 let buttonAgain, buttonNext , button_down, textAgain , a1,g,a2,i,n1 , textNext, n2,e,x,t ;
 let outerBar ,innerBar, healthBar;
 let state;
 let buttonUpTexture ;
 let buttonDownTexture;
 
+let map2 , leftTopMap ,leftEdgeMap = []  , leftBottomMap=[], 
+bottomEdgeMap= [], rightBottomMap=[], rightEdgeMap=[], 
+rightTopMap, topEdgeMap= [],centerMap =[], 
+wall, wallEdge, water, waterfall, bridge, door2,
+tree, stairs;
+let walls = [];
+let itemsMapWidth;
 
-
+let btn,message;
 
 const app = new Application({ 
     width: 256,         // default: 800
@@ -28,8 +36,8 @@ app.renderer.autoDensity = true;
 app.renderer.resize(512, 512);
 
 
-let gameScene;
-
+let gameScene1;
+let gameScene2;
 let gameOverScene;
 
 
@@ -37,46 +45,42 @@ loader.onProgress.add(loadProgressHandler)
 loader
   .add("./img/treasureHunter.json")
   .add("./img/buttonGame.json")
+  .add("./img/map2/map2.json")
   .load(setup);
 function loadProgressHandler() {
     console.log("loading"); 
   }
 function setup() {
-    id = resources["./img/treasureHunter.json"].textures; 
+    map1 = resources["./img/treasureHunter.json"].textures; 
     btn =  resources["./img/buttonGame.json"].textures
+    map2 = resources["./img/map2/map2.json"].textures; 
     
     
-    gameScene = new PIXI.Container();
-    app.stage.addChild(gameScene);
+    gameScene1 = new PIXI.Container();
+    app.stage.addChild(gameScene1);
+    // gameScene1.visible = false;
 
-    gameOverScene = new PIXI.Container();
-    app.stage.addChild(gameOverScene);
-    gameOverScene.visible = false;
-
-    textAgain = new PIXI.Container();
-    textNext = new PIXI.Container();
-    
-
-    const dungeonTexture = TextureCache["dungeon.png"];
+    if(gameScene1.visible == true){
+      const dungeonTexture = TextureCache["dungeon.png"];
     dungeon = new Sprite(dungeonTexture);
-    gameScene.addChild(dungeon);
+    gameScene1.addChild(dungeon);
 
-    explorer = new Sprite(id["explorer.png"]);
+    explorer = new Sprite(map1["explorer.png"]);
     explorer.x = 35;
     explorer.y = 32;
     explorer.vx =0 ;
     explorer.vy=0;
-    gameScene.addChild(explorer);
+    gameScene1.addChild(explorer);
 
-    door = new Sprite(id["door.png"]); 
+    door = new Sprite(map1["door.png"]); 
     door.position.set(32, 0);
-    gameScene.addChild(door);
+    gameScene1.addChild(door);
 
-    treasure = new Sprite(id["treasure.png"]);
-    gameScene.addChild(treasure);
-    treasure.x = gameScene.width - treasure.width - 48;
-    treasure.y = gameScene.height / 2 - treasure.height / 2;
-    gameScene.addChild(treasure);
+    treasure = new Sprite(map1["treasure.png"]);
+    gameScene1.addChild(treasure);
+    treasure.x = gameScene1.width - treasure.width - 48;
+    treasure.y = gameScene1.height / 2 - treasure.height / 2;
+    gameScene1.addChild(treasure);
 
     const numberOfBlobs = 6,
             spacing = 48,
@@ -84,7 +88,7 @@ function setup() {
     for (let i = 0; i < numberOfBlobs; i++) {
 
         //Make a blob
-        blob[i] = new Sprite(id["blob.png"]);
+        blob[i] = new Sprite(map1["blob.png"]);
 
         //Space each blob horizontally according to the `spacing` value.
         //`xOffset` determines the point from the left of the screen
@@ -93,7 +97,7 @@ function setup() {
 
         //Give the blob a random y position
         //(`randomInt` is a custom function - see below)
-        const y = randomInt(0,  gameScene.height - blob[i].height  -10);
+        const y = randomInt(0,  gameScene1.height - blob[i].height  -10);
 
         //Set the blob's position
         blob[i].x = x;
@@ -101,12 +105,12 @@ function setup() {
         blob[i].vy=1;
 
         //Add the blob sprite to the stage
-        gameScene.addChild(blob[i]);
+        gameScene1.addChild(blob[i]);
        
     }
     healthBar = new PIXI.Container();
-    healthBar.position.set(gameScene.width - 170, 4);
-    gameScene.addChild(healthBar);
+    healthBar.position.set(gameScene1.width - 170, 4);
+    gameScene1.addChild(healthBar);
 
     //Create the black background rectangle
     innerBar = new PIXI.Graphics();
@@ -124,6 +128,21 @@ function setup() {
 
     healthBar.outer = outerBar;
 
+    }
+
+    gameScene2 = new PIXI.Container();
+    app.stage.addChild(gameScene2);
+    gameScene2.visible = false;
+
+    gameOverScene = new PIXI.Container();
+    app.stage.addChild(gameOverScene);
+    gameOverScene.visible = false;
+
+    textAgain = new PIXI.Container();
+    textNext = new PIXI.Container();
+    
+
+   
     // game over scene ////////////////
     buttonUpTexture = TextureCache["button_up.png"];
     buttonDownTexture = TextureCache["button_down.png"];
@@ -226,11 +245,118 @@ function setup() {
 
     gameOverScene.addChild(message);
 
-    state = play;
+    ////////////////Map 2 ////////////////////
+    if (gameScene2.visible == true) {
+      leftTopMap = new Sprite(map2["leftTopMap.png"])
+    leftTopMap.x= 0;
+    leftTopMap.y = 0;
+    gameScene2.addChild(leftTopMap);
+    
+    itemsMapWidth = leftTopMap.width;
+    for (let i = 0; i <5; i++) {
+      
+        
+        topEdgeMap[i] = new Sprite(map2["topEdgeMap.png"])
+        topEdgeMap[i].x = itemsMapWidth +itemsMapWidth*i;
+        topEdgeMap[i].y = 0
+        gameScene2.addChild(topEdgeMap[i]);
+      
+        
+    }
 
+    rightTopMap = new Sprite(map2["rightTopMap.png"])
+    rightTopMap.x= topEdgeMap[4].x + itemsMapWidth;
+    rightTopMap.y = 0;
+    gameScene2.addChild(rightTopMap);
+
+    for (let i = 0; i < 2; i++) {
+      leftEdgeMap[i] = new Sprite(map2["leftEdgeMap.png"])
+      leftEdgeMap[i].x = 0;
+      leftEdgeMap[i].y =leftTopMap.width + leftTopMap.width*i;
+      gameScene2.addChild(leftEdgeMap[i]);
+    }
+
+    for (let i = 0; i <5; i++) {
+      for (let j = 0; j < 2; j++) {
+        centerMap[i+j] = new Sprite(map2["centerMap.png"])
+        centerMap[i+j].x = itemsMapWidth +itemsMapWidth*i;
+        centerMap[i+j].y = itemsMapWidth + itemsMapWidth*j;
+        gameScene2.addChild(centerMap[i+j]);
+      }
+    }
+    for (let i = 0; i < 2; i++) {
+      rightEdgeMap[i] = new Sprite(map2["rightEdgeMap.png"])
+      rightEdgeMap[i].x = itemsMapWidth *6;
+      rightEdgeMap[i].y =leftTopMap.width + leftTopMap.width*i;
+      gameScene2.addChild(rightEdgeMap[i]);
+    }
     
+    ////// row 4////////////////////
+    leftBottomMap[0] = new Sprite(map2["leftBottomMap.png"]);
+    leftBottomMap[0].x= itemsMapWidth;
+    leftBottomMap[0].y= itemsMapWidth*3;
+    gameScene2.addChild(leftBottomMap[0])
     
+    rightBottomMap[0] = new Sprite(map2["rightBottomMap.png"]);
+    rightBottomMap[0].x= itemsMapWidth*2;
+    rightBottomMap[0].y= itemsMapWidth*3;
+    gameScene2.addChild(rightBottomMap[0])
+
+    leftBottomMap[1] = new Sprite(map2["leftBottomMap.png"]);
+    leftBottomMap[1].x= itemsMapWidth*4;
+    leftBottomMap[1].y= itemsMapWidth*3;
+    gameScene2.addChild(leftBottomMap[1])
     
+    rightBottomMap[1] = new Sprite(map2["rightBottomMap.png"]);
+    rightBottomMap[1].x= itemsMapWidth*6;
+    rightBottomMap[1].y= itemsMapWidth*3;
+    gameScene2.addChild(rightBottomMap[1])
+
+    centerMap[0]= new Sprite(map2["centerMap.png"]);
+    centerMap[0].x=itemsMapWidth*5;
+    centerMap[0].y= itemsMapWidth*3;
+    gameScene2.addChild(centerMap[0])
+
+    door2 = new Sprite(map2["door2.png"]);
+    door2.x = 0;
+    door2.y = itemsMapWidth*3;
+    gameScene2.addChild(door2)
+
+    stairs = new Sprite(map2["stairs.png"]);
+    stairs.x = itemsMapWidth*3;
+    stairs.y = itemsMapWidth*3;
+    gameScene2.addChild(stairs)
+    ///// row 5////////
+    centerMap[0]= new Sprite(map2["centerMap.png"]);
+    centerMap[0].x=0;
+    centerMap[0].y= itemsMapWidth*4;
+    gameScene2.addChild(centerMap[0])
+
+    for (let i = 0; i < 2; i++) {
+      wall = new Sprite(map2["wall.png"]);
+      wall.x = itemsMapWidth +itemsMapWidth*i;
+      wall.y = itemsMapWidth*4;
+      walls.push(wall);
+      gameScene2.addChild(wall)
+
+    }
+    for (let i = 0; i < 3; i++) {
+      wall = new Sprite(map2["wall.png"]);
+      wall.x = itemsMapWidth*4 +itemsMapWidth*i;
+      wall.y = itemsMapWidth*4;
+      walls.push(wall);
+      gameScene2.addChild(wall)
+    }
+    console.log(walls)
+    explorer = new Sprite(map1["explorer.png"]);
+    explorer.x = 35;
+    explorer.y = 32;
+    explorer.vx =0 ;
+    explorer.vy=0;
+    gameScene2.addChild(explorer);
+    }
+
+    state = play;
     app.ticker.add((delta) => gameLoop(delta));
 }
 function gameLoop(delta) {
@@ -240,60 +366,121 @@ function gameLoop(delta) {
     
 }
 function play(delta) {
-    
-    for(let j = 0; j < blob.length; j++) {
-      if(detectCollision(explorer, blob[j])){
-       
-        explorer.alpha = 0.5;
-        healthBar.outer.width -= 1;
-      }
-      else{
-        explorer.alpha = 1;
+    if(gameScene1.visible == true){
+      for(let j = 0; j < blob.length; j++) {
+        if(detectCollision(explorer, blob[j])){
+         
+          explorer.alpha = 0.5;
+          healthBar.outer.width -= 1;
+        }
+        else{
+          explorer.alpha = 1;
+        }
+        
+        blob[j].y += blob[j].vy
+        let blobHitsWall =detectCollisionWall(blob[j]);
+        if (blobHitsWall === "top" || blobHitsWall === "bottom") {
+            blob[j].vy *= -1;
+        }
       }
       
-      blob[j].y += blob[j].vy
-      let blobHitsWall =detectCollisionWall(blob[j]);
-      if (blobHitsWall === "top" || blobHitsWall === "bottom") {
-          blob[j].vy *= -1;
+      if (detectCollision(explorer, treasure)) {
+        treasure.x = explorer.x + 8;
+        treasure.y = explorer.y + 8;
       }
-    }
-    
-    if (detectCollision(explorer, treasure)) {
-      treasure.x = explorer.x + 8;
-      treasure.y = explorer.y + 8;
-    }
-    let explorerHitsWall = detectCollisionWall(explorer);
-    if(explorerHitsWall === "top" || explorerHitsWall === "bottom"){
-      explorer.y += 0;
-    }else if (explorerHitsWall === "left" || explorerHitsWall === "right") {
-      explorer.x += 0;
+      let explorerHitsWall = detectCollisionWall(explorer);
+      if(explorerHitsWall === "top" || explorerHitsWall === "bottom"){
+        explorer.y += 0;
+      }else if (explorerHitsWall === "left" || explorerHitsWall === "right") {
+        explorer.x += 0;
+      }else{
+        explorer.x += explorer.vx;
+        explorer.y += explorer.vy;
+      }
+      if (hitTestRectangle(treasure, door)) {
+        state = end;
+        message.text = "You won!";
+      }
+      if (healthBar.outer.width < 0) {
+        state = end;
+        message.text = "You lost!";
+      }
+      explorer.x += explorer.vx * delta;
+        explorer.y += explorer.vy *delta;
+      control();
     }else{
-      explorer.x += explorer.vx;
-     explorer.y += explorer.vy;
+      let check = false
+    walls.forEach(function(wall) {
+        if(explorer.x +explorer.width > wall.x && explorer.x  < wall.x +itemsMapWidth && explorer.y + explorer.height> wall.y && explorer.y < wall.y + itemsMapWidth){
+          check = true
+          // if (explorer.y < wall.y + itemsMapWidth && explorer.x > wall.x && explorer.x +explorer.width < wall.y+ wall.height) {
+          //   explorer.vy =0;
+          //   explorer.vx =0;
+          //   explorer.y -=1;
+          // }else
+          // if (explorer.y > wall.y && explorer.x > wall.x && explorer.x +explorer.width < wall.y+ wall.height) {
+          //   explorer.vy =0;
+          //   explorer.vx =0;
+          //   explorer.y +=2;
+          //   console.log("cham duoi")
+          // }
+          // if (explorer.x  < wall.x +itemsMapWidth && explorer.y > wall.y && explorer.y + explorer.height < wall.y +itemsMapWidth) {
+          //   explorer.vx =0;
+          //   explorer.vy =0;
+          //   explorer.x +=1;
+          //   console.log("cham phai")
+          // }else
+          // if (explorer.x +explorer.width > wall.x  && explorer.y > wall.y && explorer.y + explorer.height < wall.y +itemsMapWidth) {
+          //   explorer.vx =0;
+          //   explorer.vy =0;
+          //   explorer.x -=1;
+          //   console.log("cham trái")
+          // }
+          // if (explorer.y > wall.y && explorer.x > wall.x && explorer.x +explorer.width < wall.y+ wall.height) {
+          //   explorer.x-=1;
+          //   explorer.y -=1;
+          // }
+        }
+
+    });
+      let explCheck = contain(explorer, {x: 0, y: 0, width:480 , height: 480})
+      if (explCheck ==="top" || explCheck ==="bottom") {
+        explorer.y += 0;
+      }else if (explCheck === "left" || explCheck ==="right") {
+        explorer.x += 0;
+      }
+      if(check){
+        explorer.x -=1;
+        explorer.y -=1;
+        check= false
+        
+      }else{
+        explorer.x += explorer.vx * delta;
+        explorer.y += explorer.vy *delta;
+        
+      }
+      console.log(check)
+    
+      // explorer.vx=1;
+      // explorer.vy=1;
+      control();
+      // check= false
     }
-    if (hitTestRectangle(treasure, door)) {
-      state = end;
-      message.text = "You won!";
-    }
-    if (healthBar.outer.width < 0) {
-      state = end;
-      message.text = "You lost!";
-    }
-    control();
 }
 
 function end() {
-  gameScene.resolution = 0.5;
+  gameScene1.visible = false;
+  gameScene2.visible = false;
   gameOverScene.visible = true;
 }
 function againGame() {
-  // gameScene.visible = true;
+  gameScene1.visible = true;
   gameOverScene.visible = false;
   explorer.x = 35;
   explorer.y = 32;
   healthBar.outer.width = 128
-  treasure.x = gameScene.width - treasure.width - 48;
-  treasure.y = gameScene.height / 2 - treasure.height / 2;
+  treasure.x = gameScene1.width - treasure.width - 48;
+  treasure.y = gameScene1.height / 2 - treasure.height / 2;
 }
 
 function detectCollision(obj1, obj2) {
@@ -512,7 +699,7 @@ function contain(sprite, container) {
 
   //Right
   if (sprite.x + sprite.width > container.width) {
-    sprite.x = container.width - sprite.width;
+    // sprite.x = container.width - sprite.width;
     collision = "right";
   }
 
